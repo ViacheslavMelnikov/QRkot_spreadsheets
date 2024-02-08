@@ -33,5 +33,14 @@ class CRUDCharityProject(CRUDBase):
         charity_project = await session.execute(select_stmt)
         return charity_project.scalars().all()
 
+    async def get_count_res_at_the_same_time(
+            self, session: AsyncSession) -> list[dict[str, int]]:
+        charity_projects = await session.execute(
+            select(CharityProject).where(CharityProject.fully_invested == 1))
+        charity_projects = charity_projects.scalars().all()
+        charity_projects.sort(
+            key=lambda element: (element.close_date - element.create_date))
+        return charity_projects
+
 
 charity_project_crud = CRUDCharityProject(CharityProject)
