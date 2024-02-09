@@ -7,7 +7,10 @@ from app.core.google_client import get_service
 from app.core.user import current_superuser
 
 from app.crud.charity_project import charity_project_crud
-from app.services.google_api import spreadsheets_create, set_user_permissions, spreadsheets_update_value
+from app.services.google_api import (
+    spreadsheets_create,
+    set_user_permissions,
+    spreadsheets_update_value)
 
 
 router = APIRouter()
@@ -25,12 +28,12 @@ async def get_report(
     """
     Только для суперюзеров.
     Формирования отчёта в гугл-таблице по закрытым проектам.
+    Возвращает полное имя таблицы отчета.
     """
     charity_projects = await charity_project_crud.get_count_res_at_the_same_time(session)
-    # Вызов функций
-    spreadsheetid = await spreadsheets_create(wrapper_services)
+    spreadsheetid, spreadsheetUrl = await spreadsheets_create(wrapper_services)
     await set_user_permissions(spreadsheetid, wrapper_services)
     await spreadsheets_update_value(spreadsheetid,
                                     charity_projects,
                                     wrapper_services)
-    return charity_projects
+    return spreadsheetUrl

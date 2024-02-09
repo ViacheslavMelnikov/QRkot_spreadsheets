@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.base import CRUDBase
@@ -35,12 +35,24 @@ class CRUDCharityProject(CRUDBase):
 
     async def get_count_res_at_the_same_time(
             self, session: AsyncSession) -> list[dict[str, int]]:
+
+        def differences(element_extract):
+            return func.extract(
+                element_extract, CharityProject.close_date) - func.extract(
+                    element_extract, CharityProject.create_date)
+
         charity_projects = await session.execute(
-            select(CharityProject).where(CharityProject.fully_invested == 1))
-        charity_projects = charity_projects.scalars().all()
-        charity_projects.sort(
-            key=lambda element: (element.close_date - element.create_date))
-        return charity_projects
+            select(CharityProject).where(
+                CharityProject.fully_invested == 1).order_by(
+                    differences('year'),
+                    differences('month'),
+                    differences('day'),
+                    differences('hour'),
+                    differences('minute'),
+                    differences('second'))
+        )
+
+        return charity_projects.scalars().all()
 
 
 charity_project_crud = CRUDCharityProject(CharityProject)
